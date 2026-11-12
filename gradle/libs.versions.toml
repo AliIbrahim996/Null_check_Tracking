@@ -1,0 +1,22 @@
+[versions]
+itextpdf = "5.5.13.4"
+junit = "5.11.3"
+javafx = "21.0.5"
+javafxPlugin = "0.1.0"
+treeSitter = "0.26.6"
+treeSitterJava = "0.23.5"
+treeSitterPhp = "0.24.2"
+treeSitterCpp = "0.23.4"
+
+[libraries]
+itextpdf = { module = "com.itextpdf:itextpdf", version.ref = "itextpdf" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+tree-sitter = { module = "io.github.bonede:tree-sitter", version.ref = "treeSitter" }
+tree-sitter-java = { module = "io.github.bonede:tree-sitter-java", version.ref = "treeSitterJava" }
+tree-sitter-php = { module = "io.github.bonede:tree-sitter-php", version.ref = "treeSitterPhp" }
+tree-sitter-cpp = { module = "io.github.bonede:tree-sitter-cpp", version.ref = "treeSitterCpp" }
+
+[plugins]
+javafx = { id = "org.openjfx.javafxplugin", version.ref = "javafxPlugin" }
