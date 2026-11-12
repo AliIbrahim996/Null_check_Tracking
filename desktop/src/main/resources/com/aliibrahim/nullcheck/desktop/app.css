@@ -1,0 +1,101 @@
+.root {
+    -accent: #2f6fde;
+    -null-check: #fde8e6;
+    -null-check-border: #e5534b;
+    -if-line: #f3f6fb;
+    -fx-font-size: 13px;
+}
+
+.tool-bar {
+    -fx-padding: 6 10 6 10;
+    -fx-spacing: 8;
+}
+
+.button.accent {
+    -fx-base: -accent;
+    -fx-text-fill: white;
+}
+
+.file-label {
+    -fx-text-fill: #555;
+}
+
+/* ---------------------------------------------------------------- source listing */
+
+.source-view {
+    -fx-background-insets: 0;
+}
+
+.source-view .list-cell {
+    -fx-padding: 0 8 0 0;
+    -fx-background-color: white;
+}
+
+.source-view .list-cell:selected {
+    -fx-background-color: #dbe7fb;
+}
+
+.source-view .list-cell.if-line {
+    -fx-background-color: -if-line;
+}
+
+.source-view .list-cell.null-check-line {
+    -fx-background-color: -null-check-border, -null-check;
+    -fx-background-insets: 0, 0 0 0 3;
+}
+
+.source-view .list-cell.null-check-line:selected {
+    -fx-background-color: -null-check-border, #f8cfcb;
+}
+
+.source-view .line-number {
+    -fx-font-family: "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
+    -fx-text-fill: #9a9a9a;
+    -fx-padding: 0 12 0 0;
+}
+
+.source-view .code,
+.table-column.code .table-cell {
+    -fx-font-family: "Consolas", "Menlo", "DejaVu Sans Mono", monospace;
+    -fx-text-fill: #1f1f1f;
+}
+
+.table-column.number .table-cell {
+    -fx-alignment: center-right;
+    -fx-padding: 0 10 0 0;
+}
+
+/* ---------------------------------------------------------------- statistics */
+
+.card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #e1e4e8;
+    -fx-border-radius: 8;
+    -fx-padding: 12 16 12 16;
+    -fx-min-width: 150;
+}
+
+.card-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -accent;
+}
+
+.card-caption {
+    -fx-text-fill: #666;
+}
+
+/* ---------------------------------------------------------------- status bar */
+
+.status-bar {
+    -fx-padding: 4 10 4 10;
+    -fx-background-color: #f4f4f4;
+    -fx-border-color: #dddddd transparent transparent transparent;
+}
+
+.statistics-heading {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 0 0 0;
+}

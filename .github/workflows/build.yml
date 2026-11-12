@@ -1,0 +1,87 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    # JavaFX ships native libraries per platform, so each OS builds its own desktop distribution.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build, test and check docs
+        run: ./gradlew build javadoc --console=plain
+
+      - name: Analyse the samples
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: |
+          for f in samples/*.java samples/*.php samples/*.cpp; do
+            ./gradlew -q :cli:run --args="$f build/sample-reports/$(basename "$f").pdf"
+          done
+          ./gradlew -q :cli:run --args="samples build/sample-reports/all-samples.pdf"
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ matrix.platform }}
+          path: "*/build/reports/tests/"
+          if-no-files-found: ignore
+
+      - name: Upload desktop distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: null-check-tracking-${{ matrix.platform }}
+          path: desktop/build/distributions/*.zip
+          if-no-files-found: error
+
+      - name: Upload command-line distribution
+        if: matrix.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: null-check-cli
+          path: cli/build/distributions/*.zip
+          if-no-files-found: error
+
+      - name: Upload sample reports
+        if: matrix.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-reports
+          path: build/sample-reports/*.pdf
+          if-no-files-found: error
