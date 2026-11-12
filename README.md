@@ -17,18 +17,23 @@ It comes with a JavaFX desktop app and a command-line tool, and it can save the 
   - **Java** (`.java`): `x == null`, `null != x`, `Objects.isNull(x)`, `Objects.nonNull(x)`.
   - **PHP** (`.php`, `.phtml`): `==`, `===`, `!=`, `!==` and `<>` with `null` in any case, `is_null(...)`,
     `isset(...)`, `elseif` and `and` / `or` / `xor`. Inline HTML and heredocs are skipped.
-  - **C/C++** (`.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, `.c`, …): `== nullptr`, `!= NULL`, and implicit pointer
-    checks such as `if (p)`, `if (!p)` and `if (Node* n = next())` for raw pointers, `unique_ptr` and
-    `shared_ptr`.
+  - **C++** (`.cpp`, `.cc`, `.cxx`, `.h`, `.hpp`, …) and **C** (`.c`, parsed with the C grammar):
+    `== nullptr`, `!= NULL`, and implicit pointer checks such as `if (p)`, `if (!p)` and
+    `if (Node* n = next())` for raw pointers, `unique_ptr` and `shared_ptr`.
+  - Java also accepts statically imported `isNull(x)` / `nonNull(x)`.
 - **Classifies each comparand** as a method call, field access or name, and resolves names through the syntax
   tree to a **parameter** (of methods, constructors, lambdas, closures), **local variable** (including loop,
-  catch and resource variables) or **member** of the enclosing class, including anonymous classes and
+  catch, resource and pattern variables) or **member** of the enclosing class, including anonymous classes and
   out-of-line C++ member functions.
-- **Traces definitions.** Lists the declarations and assignments that come before the first check, with advice
-  such as "null assigned to name in line 13; assign another value instead of null". PHP property declarations
-  and parameter defaults count too.
-- **Whole folders.** Analyses every supported file under a folder (skipping hidden, `build`, `target`, `out`,
-  `dist`, `node_modules` and `vendor` folders), with a summary per file and project-wide statistics.
+- **Traces definitions.** Lists the declarations and assignments of the same variable (not just the same name)
+  that come before its first check, with advice such as "null assigned to name in line 13; assign another
+  value instead of null". PHP property declarations, promoted constructor properties and parameter defaults
+  count too.
+- **Whole folders.** Analyses every supported file under a folder, with a summary per file and project-wide
+  statistics. Hidden folders and `node_modules` are skipped; `build`, `target`, `out` and `dist` are skipped
+  when a build file (`build.gradle.kts`, `pom.xml`, `package.json`, `CMakeLists.txt`, …) sits next to them, and
+  `vendor` next to `composer.json` or `go.mod`, so source packages with those names are still analysed. A file
+  that fails is listed in the report instead of stopping the run.
 - **Statistics**: the share of `if` statements that check for null, and of comparands by kind and scope.
 - **Desktop app**: open a file or a folder, browse the files, source listing with null checks highlighted,
   tables of checks, `if` statements and advice (click a row to jump to the line), charts for the file and the

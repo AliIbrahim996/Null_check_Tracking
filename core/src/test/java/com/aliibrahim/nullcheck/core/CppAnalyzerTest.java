@@ -28,9 +28,41 @@ class CppAnalyzerTest {
 
     @Test
     void extensions() {
-        for (String name : List.of("a.cpp", "a.cc", "a.cxx", "a.hpp", "a.h", "a.c")) {
+        for (String name : List.of("a.cpp", "a.cc", "a.cxx", "a.hpp", "a.h")) {
             assertEquals(Optional.of(Language.CPP), Language.forFileName(name), name);
         }
+        assertEquals(Optional.of(Language.C), Language.forFileName("a.c"));
+    }
+
+    @Test
+    void cFilesUseTheCGrammar() {
+        AnalysisResult r = analyzer.analyze("""
+                struct node { struct node *next; };
+                int f(struct node *this, int new) {
+                  struct node *class = this->next;
+                  if (this == NULL || !class) { return new; }
+                  return 0;
+                }
+                """, Language.C);
+        assertEquals(List.of("this", "class"), expressions(r));
+        assertEquals(List.of(NameScope.PARAMETER, NameScope.LOCAL), scopes(r));
+    }
+
+    @Test
+    void definitionsBelongToTheVariableNotTheName() {
+        AnalysisResult r = cpp("""
+                void a() {
+                  int* item = nullptr;
+                  if (item == nullptr) {}
+                }
+                void b(int* item) {
+                  item = nullptr;
+                  if (item == nullptr) {}
+                }
+                """);
+        assertEquals(List.of(2, 6), r.definitions().stream().map(Definition::line).toList());
+        assertEquals(List.of("int* item = nullptr;", "item = nullptr;"),
+                r.definitions().stream().map(Definition::code).toList());
     }
 
     @Test

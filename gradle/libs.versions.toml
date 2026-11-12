@@ -7,6 +7,7 @@ treeSitter = "0.26.6"
 treeSitterJava = "0.23.5"
 treeSitterPhp = "0.24.2"
 treeSitterCpp = "0.23.4"
+treeSitterC = "0.24.1"
 
 [libraries]
 itextpdf = { module = "com.itextpdf:itextpdf", version.ref = "itextpdf" }
@@ -17,6 +18,7 @@ tree-sitter = { module = "io.github.bonede:tree-sitter", version.ref = "treeSitt
 tree-sitter-java = { module = "io.github.bonede:tree-sitter-java", version.ref = "treeSitterJava" }
 tree-sitter-php = { module = "io.github.bonede:tree-sitter-php", version.ref = "treeSitterPhp" }
 tree-sitter-cpp = { module = "io.github.bonede:tree-sitter-cpp", version.ref = "treeSitterCpp" }
+tree-sitter-c = { module = "io.github.bonede:tree-sitter-c", version.ref = "treeSitterC" }
 
 [plugins]
 javafx = { id = "org.openjfx.javafxplugin", version.ref = "javafxPlugin" }

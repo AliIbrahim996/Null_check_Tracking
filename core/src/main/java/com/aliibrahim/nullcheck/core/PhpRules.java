@@ -139,22 +139,62 @@ final class PhpRules extends LanguageRules {
         return NameScope.LOCAL;
     }
 
-    /** Property declarations define {@code $this->name} and {@code self::$name}; parameter defaults define the parameter. */
+    /**
+     * A variable belongs to the function, method or closure it is used in (arrow functions see the variables
+     * around them), so that function is its declaration; at the top level it belongs to the file.
+     */
     @Override
-    List<String> declaredExpressions(TSNode node, SyntaxTree tree) {
+    TSNode declarationNode(TSNode expression, SyntaxTree tree) {
+        if (!expression.getType().equals("variable_name") || tree.text(expression).equals("$this")) {
+            return null;
+        }
+        return owner(expression, tree.text(expression), tree);
+    }
+
+    private static TSNode owner(TSNode node, String variable, SyntaxTree tree) {
+        for (TSNode a = parent(node); a != null; a = parent(a)) {
+            if (FUNCTIONS.contains(a.getType())
+                    && (!a.getType().equals("arrow_function") || declaresParameter(a, variable, tree))) {
+                return a;
+            }
+        }
+        return tree.root;
+    }
+
+    private static boolean declaresParameter(TSNode function, String variable, SyntaxTree tree) {
+        TSNode parameters = field(function, "parameters");
+        if (parameters != null) {
+            for (TSNode p : namedChildren(parameters)) {
+                TSNode pName = field(p, "name");
+                if (PARAMETERS.contains(p.getType()) && pName != null && variable.equals(tree.text(pName))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Property declarations define {@code $this->name} and {@code self::$name}; constructor-promoted parameters
+     * define the property too, and parameter defaults define the parameter.
+     */
+    @Override
+    List<String> declaredKeys(TSNode node, SyntaxTree tree) {
         String type = node.getType();
         TSNode name = field(node, "name");
         if (name == null) {
             return List.of();
         }
-        if (type.equals("property_element")) {
-            String property = tree.text(name).substring(1);
-            return List.of("$this->" + property, "self::$" + property, "static::$" + property);
+        String variable = tree.text(name);
+        List<String> keys = new ArrayList<>();
+        if (type.equals("property_element") || type.equals("property_promotion_parameter")) {
+            String property = variable.substring(1);
+            keys.addAll(List.of("$this->" + property, "self::$" + property, "static::$" + property));
         }
         if (PARAMETERS.contains(type) && field(node, "default_value") != null) {
-            return List.of(tree.text(name));
+            keys.add(key(variable, owner(node, variable, tree), tree));
         }
-        return List.of();
+        return keys;
     }
 
     @Override

@@ -116,8 +116,7 @@ public final class NullCheckAnalyzer {
                 NameScope scope = kind == ComparandKind.NAME ? rules.resolveScope(subject, tree) : null;
                 comparands.add(new NullComparand(tree.code(expression), kind, scope, line));
                 if (kind != ComparandKind.METHOD_CALL) {
-                    String subjectText = tree.code(subject);
-                    firstChecks.putIfAbsent(rules.normalize(subjectText), new Check(subjectText, line));
+                    firstChecks.putIfAbsent(rules.key(subject, tree), new Check(tree.code(subject), line));
                 }
             }
         }
@@ -154,8 +153,9 @@ public final class NullCheckAnalyzer {
     // ---------------------------------------------------------------- definitions
 
     /**
-     * Collects, for each checked name and field, the assignments and declarations that start on a line before
-     * its first check, in the order the comparands are first checked.
+     * Collects, for each checked variable and field, the assignments and declarations that start on a line
+     * before its first check, in the order the comparands are first checked. Variables are matched by
+     * {@linkplain LanguageRules#key key}, so a same-named variable in another method does not count.
      */
     private static List<Definition> definitions(SyntaxTree tree, LanguageRules rules, Map<String, Check> firstChecks) {
         Map<String, List<Definition>> found = new LinkedHashMap<>();
@@ -163,17 +163,17 @@ public final class NullCheckAnalyzer {
         SyntaxTree.walk(tree.root, node -> {
             if (rules.assignmentTypes().contains(node.getType())) {
                 TSNode left = field(node, "left");
-                Check check = left == null ? null : firstChecks.get(rules.normalize(tree.code(left)));
+                String key = left == null ? null : rules.key(left, tree);
+                Check check = key == null ? null : firstChecks.get(key);
                 if (check != null && line(node) < check.line()) {
-                    found.get(rules.normalize(tree.code(left)))
-                            .add(new Definition(check.subject(), tree.code(statement(node)), line(node)));
+                    found.get(key).add(new Definition(check.subject(), tree.code(statement(node)), line(node)));
                 }
                 return;
             }
-            for (String declared : rules.declaredExpressions(node, tree)) {
-                Check check = firstChecks.get(rules.normalize(declared));
+            for (String key : rules.declaredKeys(node, tree)) {
+                Check check = firstChecks.get(key);
                 if (check != null && line(node) < check.line()) {
-                    found.get(rules.normalize(declared)).add(
+                    found.get(key).add(
                             new Definition(check.subject(), tree.code(rules.definitionNode(node)), line(node)));
                 }
             }

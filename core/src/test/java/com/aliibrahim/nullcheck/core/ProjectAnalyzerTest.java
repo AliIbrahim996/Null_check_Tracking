@@ -27,21 +27,35 @@ class ProjectAnalyzerTest {
         write(dir.resolve("src/web/index.php"), "<?php if ($x === null) { }");
         write(dir.resolve("native/list.cpp"), "void f(int* p) { if (!p) {} }");
         write(dir.resolve("README.md"), "if (x == null)");
+        write(dir.resolve("build.gradle.kts"), "");
+        write(dir.resolve("composer.json"), "{}");
         write(dir.resolve("build/Gen.java"), "class Gen {}");
         write(dir.resolve("vendor/lib/x.php"), "<?php");
         write(dir.resolve("node_modules/m/y.c"), "int y;");
         write(dir.resolve(".git/hooks/z.java"), "class Z {}");
+        // Source packages that happen to be named like output folders are not next to a build file.
+        write(dir.resolve("src/com/x/build/Pipeline.java"), "class Pipeline {}");
+        write(dir.resolve("src/out/Out.java"), "class Out {}");
 
         ProjectAnalysis project = new ProjectAnalyzer().analyze(dir);
 
-        assertEquals(List.of("native/list.cpp", "src/A.java", "src/web/index.php"),
+        assertEquals(List.of("native/list.cpp", "src/A.java", "src/com/x/build/Pipeline.java", "src/out/Out.java",
+                        "src/web/index.php"),
                 project.files().stream().map(FileAnalysis::displayPath).toList());
-        assertEquals(List.of(Language.CPP, Language.JAVA, Language.PHP),
+        assertEquals(List.of(Language.CPP, Language.JAVA, Language.JAVA, Language.JAVA, Language.PHP),
                 project.files().stream().map(FileAnalysis::language).toList());
         assertEquals(3, project.total().comparands().size());
         assertEquals(100, project.total().percentOfIfsCheckingNull());
         assertTrue(project.errors().isEmpty());
         assertEquals(dir.getFileName().toString(), project.name());
+    }
+
+    @Test
+    void buildFoldersWithoutABuildFileAreSources(@TempDir Path dir) throws IOException {
+        write(dir.resolve("build/Tool.java"), "class Tool {}");
+        write(dir.resolve("vendor/Lib.php"), "<?php");
+        assertEquals(List.of("build/Tool.java", "vendor/Lib.php"), new ProjectAnalyzer().sourceFiles(dir).stream()
+                .map(p -> p.toString().replace('\\', '/')).toList());
     }
 
     @Test

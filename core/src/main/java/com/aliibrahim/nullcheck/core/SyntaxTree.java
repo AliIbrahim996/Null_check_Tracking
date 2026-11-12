@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.function.Consumer;
+import org.treesitter.TSLanguage;
 import org.treesitter.TSNode;
 import org.treesitter.TSParser;
 import org.treesitter.TSTree;
@@ -51,10 +52,25 @@ final class SyntaxTree implements AutoCloseable {
         }
         charIndex[utf8.length] = parsed.length();
 
-        this.parser = new TSParser();
-        parser.setLanguage(rules.grammar());
-        this.tree = parser.parseString(null, parsed);
-        this.root = tree.getRootNode();
+        TSParser p = new TSParser();
+        TSTree t;
+        try {
+            TSLanguage grammar = rules.grammar();
+            if (!p.setLanguage(grammar)) {
+                throw new IllegalStateException("The tree-sitter grammar " + grammar.getClass().getSimpleName()
+                        + " is not compatible with the tree-sitter library (language ABI mismatch)");
+            }
+            t = p.parseString(null, parsed);
+            if (t == null) {
+                throw new IllegalStateException("tree-sitter could not parse the source");
+            }
+        } catch (RuntimeException e) {
+            p.close();
+            throw e;
+        }
+        this.parser = p;
+        this.tree = t;
+        this.root = t.getRootNode();
     }
 
     @Override

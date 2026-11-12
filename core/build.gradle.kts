@@ -10,4 +10,5 @@ dependencies {
     implementation(libs.tree.sitter.java)
     implementation(libs.tree.sitter.php)
     implementation(libs.tree.sitter.cpp)
+    implementation(libs.tree.sitter.c)
 }

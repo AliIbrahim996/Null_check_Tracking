@@ -8,6 +8,7 @@ import static com.aliibrahim.nullcheck.core.SyntaxTree.parent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import org.treesitter.TSLanguage;
 import org.treesitter.TSNode;
@@ -39,9 +40,21 @@ final class CppRules extends LanguageRules {
     private record Declaration(NameScope scope, TSNode node) {
     }
 
+    private final Supplier<TSLanguage> grammar;
+
+    /** Rules for C++ with the C++ grammar. */
+    CppRules() {
+        this(TreeSitterCpp::new);
+    }
+
+    /** Rules for C++ or C; the C grammar has the same node types for everything these rules use. */
+    CppRules(Supplier<TSLanguage> grammar) {
+        this.grammar = grammar;
+    }
+
     @Override
     TSLanguage grammar() {
-        return new TreeSitterCpp();
+        return grammar.get();
     }
 
     @Override
@@ -103,6 +116,15 @@ final class CppRules extends LanguageRules {
         }
         Declaration d = declarationOf(name, tree);
         return d == null ? NameScope.MEMBER : d.scope();
+    }
+
+    @Override
+    TSNode declarationNode(TSNode expression, SyntaxTree tree) {
+        if (!expression.getType().equals("identifier") && !isThisField(expression, tree)) {
+            return null;
+        }
+        Declaration d = declarationOf(expression, tree);
+        return d == null ? null : d.node();
     }
 
     /** Finds the declaration of an identifier, or of {@code this->field}, visible where the node is. */
@@ -288,18 +310,18 @@ final class CppRules extends LanguageRules {
     }
 
     @Override
-    List<String> declaredExpressions(TSNode node, SyntaxTree tree) {
+    List<String> declaredKeys(TSNode node, SyntaxTree tree) {
         if (!DECLARATIONS.contains(node.getType()) || node.getType().equals("parameter_declaration")) {
             return List.of();
         }
-        List<String> names = new ArrayList<>();
+        List<String> keys = new ArrayList<>();
         for (TSNode declarator : fieldChildren(node, "declarator")) {
             TSNode name = innermostName(declarator);
             if (name != null) {
-                names.add(tree.text(name));
+                keys.add(key(tree.text(name), node, tree));
             }
         }
-        return names;
+        return keys;
     }
 
     private static String textOf(TSNode node, SyntaxTree tree) {

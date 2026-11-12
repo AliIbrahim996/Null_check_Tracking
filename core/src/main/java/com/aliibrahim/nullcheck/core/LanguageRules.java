@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Set;
 import org.treesitter.TSLanguage;
 import org.treesitter.TSNode;
+import org.treesitter.TreeSitterC;
 
 /**
  * What the analysis needs to know about one language's syntax tree: which nodes are {@code if} statements and
@@ -22,6 +23,7 @@ abstract class LanguageRules {
             case JAVA -> new JavaRules();
             case PHP -> new PhpRules();
             case CPP -> new CppRules();
+            case C -> new CppRules(TreeSitterC::new);
         };
     }
 
@@ -87,14 +89,36 @@ abstract class LanguageRules {
     }
 
     /**
-     * If {@code node} declares variables, returns the normalised expressions it declares, for example
-     * {@code ["name"]} for {@code String name = null;}; otherwise an empty list.
+     * Returns the node that declares the variable an expression refers to (a parameter, a local declaration, a
+     * field declaration or, in PHP, the function that owns the variable), or {@code null} if the expression is
+     * not a variable or its declaration is not in the file.
      */
-    abstract List<String> declaredExpressions(TSNode node, SyntaxTree tree);
+    TSNode declarationNode(TSNode expression, SyntaxTree tree) {
+        return null;
+    }
 
-    /** Returns the node whose text is shown as the definition of a declaration found by {@link #declaredExpressions}. */
+    /**
+     * If {@code node} declares variables, returns their {@linkplain #key keys}, for example
+     * {@code ["name@120"]} for {@code String name = null;}; otherwise an empty list.
+     */
+    abstract List<String> declaredKeys(TSNode node, SyntaxTree tree);
+
+    /** Returns the node whose text is shown as the definition of a declaration found by {@link #declaredKeys}. */
     TSNode definitionNode(TSNode declaration) {
         return declaration;
+    }
+
+    /**
+     * Returns a key that identifies the variable or field an expression refers to: its normalised text, plus the
+     * position of its declaration when that is known. Two variables with the same name in different methods
+     * therefore get different keys, and {@code this.x} gets the same key as {@code x} when both mean the field.
+     */
+    final String key(TSNode expression, SyntaxTree tree) {
+        return key(normalize(tree.code(expression)), declarationNode(expression, tree), tree);
+    }
+
+    static String key(String normalized, TSNode declaration, SyntaxTree tree) {
+        return declaration == null ? normalized : normalized + "@" + tree.start(declaration);
     }
 
     // ---------------------------------------------------------------- shared helpers

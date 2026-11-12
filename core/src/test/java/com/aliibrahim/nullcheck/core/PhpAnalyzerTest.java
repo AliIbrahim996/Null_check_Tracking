@@ -125,6 +125,34 @@ class PhpAnalyzerTest {
     }
 
     @Test
+    void promotedConstructorPropertiesAreDefinitions() {
+        AnalysisResult r = php("""
+                <?php
+                class A {
+                  public function __construct(private ?string $name = null) {}
+                  function f() {
+                    if ($this->name === null) { }
+                  }
+                }
+                """);
+        assertEquals(List.of(3), r.definitions().stream().map(Definition::line).toList());
+        assertEquals("$this->name", r.definitions().get(0).comparand());
+    }
+
+    @Test
+    void variablesInDifferentFunctionsStayApart() {
+        AnalysisResult r = php("""
+                <?php
+                function a() { $v = null; }
+                function b() {
+                  $v = load();
+                  if ($v === null) { }
+                }
+                """);
+        assertEquals(List.of("$v = load();"), r.definitions().stream().map(Definition::code).toList());
+    }
+
+    @Test
     void orderSample() throws IOException {
         AnalysisResult r = analyzer.analyze(SAMPLES.resolve("Order.php"));
         assertEquals(8, r.ifStatements().size());

@@ -311,6 +311,55 @@ class NullCheckAnalyzerTest {
     }
 
     @Test
+    void patternVariablesAndSwitchGroupLocals() {
+        AnalysisResult r = analyzer.analyze("""
+                class A {
+                  void f(Object o, int k) {
+                    if (o instanceof String s && s == null) { }
+                    if (o instanceof Point(int x, String y) && y == null) { }
+                    switch (k) {
+                      case 1: String a = null;
+                      case 2: if (a == null) { }
+                    }
+                    switch (o) { case String t -> { if (t == null) { } } default -> { } }
+                  }
+                }
+                """);
+        assertEquals(List.of("s", "y", "a", "t"), expressions(r));
+        assertTrue(r.comparands().stream().allMatch(c -> c.scope() == NameScope.LOCAL), r.comparands().toString());
+    }
+
+    @Test
+    void staticallyImportedObjectsChecks() {
+        AnalysisResult r = analyzer.analyze("""
+                import static java.util.Objects.isNull;
+                import static java.util.Objects.*;
+                class A { void f(String a, String b) { if (isNull(a) || nonNull(b)) { } } }
+                """);
+        assertEquals(List.of("a", "b"), expressions(r));
+        AnalysisResult notImported = analyzer.analyze("class A { void f(String a) { if (isNull(a)) { } } }");
+        assertTrue(notImported.comparands().isEmpty());
+    }
+
+    @Test
+    void definitionsOfSameNamedVariablesStayApart() {
+        AnalysisResult r = analyzer.analyze("""
+                class A {
+                  String name;
+                  void f() {
+                    String name = load();
+                    if (name == null) { }
+                  }
+                  void g() {
+                    if (this.name == null) { }
+                  }
+                }
+                """);
+        List<String> codes = r.definitions().stream().map(d -> d.line() + ": " + d.code()).toList();
+        assertEquals(List.of("4: String name = load();", "2: String name;"), codes);
+    }
+
+    @Test
     void undeclaredNamesAreInheritedMembers() {
         AnalysisResult r = analyzer.analyze("""
                 class B extends A {

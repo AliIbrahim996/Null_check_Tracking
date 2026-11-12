@@ -38,7 +38,7 @@ public final class Main {
 
             Finds the null checks in SOURCE and prints a report. SOURCE is a Java (.java),
             PHP (.php, .phtml) or C/C++ (.cpp, .cc, .cxx, .h, .hpp, .c ...) file, or a folder:
-            then every such file in it is analysed, skipping hidden, build and dependency
+            then every such file in it is analysed, skipping hidden, build-output and dependency
             folders. With REPORT.pdf, also writes the report as a PDF file.""";
 
     private Main() {

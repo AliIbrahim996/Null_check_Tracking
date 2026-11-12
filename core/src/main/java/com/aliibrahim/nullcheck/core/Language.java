@@ -24,11 +24,18 @@ public enum Language {
     PHP("PHP", List.of("php", "phtml")),
 
     /**
-     * C and C++ source and header files. Null checks are comparisons with {@code nullptr} or {@code NULL}, and
+     * C++ source and header files, including {@code .h}, which is parsed as C++ since the C++ grammar also
+     * accepts nearly all C headers. Null checks are comparisons with {@code nullptr} or {@code NULL}, and
      * implicit checks of pointers and smart pointers such as {@code if (p)} and {@code if (!p)}. Global and
      * namespace variables, and names without a visible declaration, count as members.
      */
-    CPP("C++", List.of("cpp", "cc", "cxx", "c++", "hpp", "hh", "hxx", "h", "c"));
+    CPP("C++", List.of("cpp", "cc", "cxx", "c++", "hpp", "hh", "hxx", "h")),
+
+    /**
+     * C source files ({@code .c}), parsed with the C grammar so that C code using C++ keywords such as
+     * {@code new} or {@code class} as names is read correctly. The rules are the same as for {@link #CPP}.
+     */
+    C("C", List.of("c"));
 
     private final String label;
     private final List<String> extensions;
